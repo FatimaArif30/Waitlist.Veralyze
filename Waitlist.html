@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veralyze — Now You'll See It Too</title>
+<meta name="description" content="Veralyze shows you exactly how videos try to change your mind. Free. Almost here.">
+
+<!-- Social share preview -->
+<meta property="og:title" content="Veralyze — Now You'll See It Too">
+<meta property="og:description" content="See exactly how videos try to change your mind. Free. Almost here.">
+<meta property="og:type" content="website">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#0A0A0A; --dark2:#161616; --dark3:#1C1C1C; --dark4:#242424;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+  --yellow:#E8FF47; --yellow2:#D4EB00; --ydim:rgba(232,255,71,0.10); --yglow:rgba(232,255,71,0.25);
+  --white:#FFFFFF; --gray1:#F0F0F0; --gray2:#A0A0A0; --gray3:#606060; --gray4:#303030;
+  --green:#44FF88; --cyan:#44DDFF;
+  --font-h:'Barlow Condensed',sans-serif; --font-b:'Barlow',sans-serif; --font-m:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-b);background:var(--black);color:var(--white);line-height:1.6;min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;}
+
+/* background texture (same as main app) */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(ellipse 70% 50% at 80% 0%,rgba(232,255,71,0.07) 0%,transparent 65%),radial-gradient(ellipse 50% 40% at 0% 100%,rgba(68,221,255,0.04) 0%,transparent 60%);}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:80px 80px;}
+
+.wrap{position:relative;z-index:2;width:min(92%,640px);margin:auto;text-align:center;padding:40px 0;}
+
+/* logo */
+.logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:60px;animation:fadeup .7s ease both;}
+.logo-mark{width:38px;height:38px;background:var(--yellow);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.logo-name{font-family:var(--font-h);font-size:24px;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
+.logo-name span{color:var(--yellow);}
+
+/* chip */
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--dark3);border:1px solid var(--border2);border-radius:4px;padding:7px 16px;font-family:var(--font-m);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:32px;animation:fadeup .7s .05s ease both;}
+.chip-pulse{width:6px;height:6px;border-radius:50%;background:var(--yellow);animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.6);}}
+
+/* headline */
+.headline{font-family:var(--font-h);font-size:clamp(52px,12vw,104px);font-weight:900;text-transform:uppercase;line-height:.95;letter-spacing:-1px;margin-bottom:24px;animation:fadeup .8s .1s ease both;}
+.headline .y{color:var(--yellow);}
+
+/* subline */
+.subline{font-size:clamp(15px,2.4vw,19px);color:var(--gray2);max-width:480px;margin:0 auto 14px;line-height:1.7;animation:fadeup .8s .18s ease both;}
+.subline strong{color:var(--white);font-weight:700;}
+
+.free-line{font-family:var(--font-m);font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:44px;animation:fadeup .8s .24s ease both;}
+
+/* form */
+.access-label{font-family:var(--font-m);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gray3);margin-bottom:14px;animation:fadeup .8s .3s ease both;}
+.form-row{display:flex;gap:10px;max-width:480px;margin:0 auto 14px;animation:fadeup .8s .34s ease both;}
+@media(max-width:520px){.form-row{flex-direction:column;}}
+.email-input{flex:1;background:var(--dark3);border:1px solid var(--border2);border-radius:8px;padding:16px 18px;font-family:var(--font-m);font-size:14px;color:var(--white);outline:none;transition:border-color .25s,box-shadow .25s;}
+.email-input::placeholder{color:var(--gray3);}
+.email-input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px var(--ydim);}
+.btn-access{background:var(--yellow);color:var(--black);border:none;cursor:pointer;padding:16px 28px;border-radius:8px;font-family:var(--font-h);font-size:18px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;transition:transform .2s,box-shadow .2s,background .2s;box-shadow:0 4px 20px var(--yglow);position:relative;overflow:hidden;}
+.btn-access:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--yglow);background:var(--yellow2);}
+.btn-access:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+.micro{font-family:var(--font-m);font-size:11px;letter-spacing:.5px;color:var(--gray3);animation:fadeup .8s .4s ease both;}
+
+/* success state */
+.success{display:none;flex-direction:column;align-items:center;gap:18px;animation:popIn .5s cubic-bezier(.4,0,.2,1) both;}
+.success.show{display:flex;}
+.success-icon{width:80px;height:80px;background:var(--ydim);border:1px solid rgba(232,255,71,.25);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:38px;}
+.success h2{font-family:var(--font-h);font-size:38px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--yellow);}
+.success p{color:var(--gray2);max-width:380px;font-size:15px;line-height:1.7;}
+@keyframes popIn{from{transform:scale(.8);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+.form-wrap.hide{display:none;}
+
+/* count */
+.count-strip{margin-top:48px;font-family:var(--font-m);font-size:12px;letter-spacing:1px;color:var(--gray3);animation:fadeup .8s .46s ease both;}
+.count-strip b{color:var(--yellow);}
+
+footer{position:relative;z-index:2;text-align:center;padding:30px 0;font-family:var(--font-m);font-size:11px;letter-spacing:.5px;color:var(--gray4);margin-top:auto;}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--dark3);border:1px solid var(--border2);border-radius:10px;padding:13px 22px;font-family:var(--font-m);font-size:12px;color:var(--white);box-shadow:0 16px 48px rgba(0,0,0,.6);animation:toastIn .3s ease;}
+.toast.error{border-color:rgba(255,68,68,.4);}
+.toast.success{border-color:rgba(68,255,136,.4);}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+@keyframes fadeup{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+::selection{background:var(--yellow);color:var(--black);}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M2 3L10 17L18 3" stroke="#0A0A0A" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="4.5" y1="10" x2="15.5" y2="10" stroke="#0A0A0A" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="7.5" cy="10" r="1.2" fill="#0A0A0A"/><circle cx="12.5" cy="10" r="1.2" fill="#0A0A0A"/>
+        </svg>
+      </div>
+      <span class="logo-name">Vera<span>lyze</span></span>
+    </div>
+
+    <div class="form-wrap" id="form-wrap">
+      <div class="chip"><span class="chip-pulse"></span>Launching Soon</div>
+      <h1 class="headline">Now You'll<br><span class="y">See It</span> Too.</h1>
+      <p class="subline">Veralyze shows you <strong>exactly how videos try to change your mind</strong> — the hidden intent, the missing context, the manipulation you never noticed.</p>
+      <p class="free-line">Free · No catch · Almost here</p>
+
+      <div class="access-label">Claim your early access</div>
+      <div class="form-row">
+        <input type="email" class="email-input" id="email" placeholder="you@email.com" autocomplete="email">
+        <button class="btn-access" id="submit-btn" onclick="joinWaitlist()">Get Early Access</button>
+      </div>
+      <p class="micro">No spam. Just one heads-up the day it goes live.</p>
+
+      <div class="count-strip">Join <b id="count">the first</b> who'll see clearly.</div>
+    </div>
+
+    <div class="success" id="success">
+      <div class="success-icon">&#128064;</div>
+      <h2>You're In.</h2>
+      <p>You'll be among the first to see it. We'll send one email the day Veralyze goes live — nothing else.</p>
+    </div>
+  </div>
+
+  <footer>© 2026 Veralyze · See what's really being said.</footer>
+
+<script>
+  // ===== Supabase init (your existing project) =====
+  const { createClient } = supabase;
+  const supabaseClient = createClient(
+    'https://hjcxigxeajihshkgslvt.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqY3hpZ3hlYWppaHNoa2dzbHZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTk4NzksImV4cCI6MjA5NjkzNTg3OX0.MooXRoAB_8tI7RhepMK75TNr5AKPkMIiIHn1w6YORK4'
+  );
+
+  function showToast(msg, type){
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type||'');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3000);
+  }
+
+  function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+  async function joinWaitlist(){
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const btn = document.getElementById('submit-btn');
+    if(!validEmail(email)){ showToast('Please enter a valid email','error'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Joining...';
+
+    const { error } = await supabaseClient
+      .from('waitlist')
+      .insert({ email: email, source: 'poster' });
+
+    if(error){
+      if(error.code === '23505'){
+        // duplicate email = already joined; treat as success
+        showSuccess();
+        return;
+      }
+      console.error(error);
+      showToast('Something went wrong. Try again.','error');
+      btn.disabled = false;
+      btn.textContent = 'Get Early Access';
+      return;
+    }
+    showSuccess();
+  }
+
+  function showSuccess(){
+    document.getElementById('form-wrap').classList.add('hide');
+    document.getElementById('success').classList.add('show');
+  }
+
+  // load count (optional social proof)
+  async function loadCount(){
+    const { count } = await supabaseClient
+      .from('waitlist')
+      .select('*', { count: 'exact', head: true });
+    if(count && count > 0){
+      document.getElementById('count').textContent = count + (count === 1 ? ' person' : ' people');
+    }
+  }
+  loadCount();
+
+  document.getElementById('email').addEventListener('keydown', e=>{ if(e.key==='Enter') joinWaitlist(); });
+</script>
+</body>
+</html>
